@@ -89,30 +89,42 @@ namespace vruc_score_bot_cs
                 {
                     var text = await resp.Content.ReadAsStringAsync();
 
-                    var obj = JsonConvert.DeserializeAnonymousType(
-                        text,
-                        new
-                        {
-                            data = new List<GradeResult>()
-                        });
-
-                    foreach (var item in obj.data)
+                    try
                     {
-                        if (item.kcname != null && item.kcname.Length > 0)
-                        {
-                            if (item.jd == null)
-                                item.jd = item.xf;
+                        dynamic obj_dyn = JsonConvert.DeserializeObject(text);
+                        if (obj_dyn.errorCode != "success")
+                            throw new ApplicationException("API 调用失败");
 
-                            var key = $@"{item.xnxq}-{item.kcname}";
-                            var value = $@"{item.xf} {item.jd} {item.zcj} {item.cjxm1} {item.cjxm3}";
-
-                            if (!class_set.ContainsKey(key) || class_set[key] != value)
+                        var obj = JsonConvert.DeserializeAnonymousType(
+                            text,
+                            new
                             {
-                                class_set[key] = value;
-                                ret.Add((key, item.xf.ToString(), item.jd.Value.ToString(), item.zcj.ToString(), item.cjxm1, item.cjxm3));
+                                data = new List<GradeResult>()
+                            });
+
+                        foreach (var item in obj.data)
+                        {
+                            if (item.kcname != null && item.kcname.Length > 0)
+                            {
+                                if (item.jd == null)
+                                    item.jd = item.xf;
+
+                                var key = $@"{item.xnxq}-{item.kcname}";
+                                var value = $@"{item.xf} {item.jd} {item.zcj} {item.cjxm1} {item.cjxm3}";
+
+                                if (!class_set.ContainsKey(key) || class_set[key] != value)
+                                {
+                                    class_set[key] = value;
+                                    ret.Add((key, item.xf.ToString(), item.jd.Value.ToString(), item.zcj.ToString(), item.cjxm1, item.cjxm3));
+                                }
                             }
                         }
                     }
+                    catch (Exception e)
+                    {
+                        throw new ApplicationException($"Msg from server: {text}", e);
+                    }
+
                 }
             }
 

@@ -73,10 +73,23 @@ table, th, td {
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("\nException Caught!");
-                        Console.WriteLine("Message :{0} ", e.Message);
+                        string msg = "";
 
-                        mail.SendMail("发生异常", e.Message, "plain");
+                        while (e != null)
+                        {
+                            if (msg.Length != 0)
+                            {
+                                msg = msg + "\r\n\r\nPrevous exception was caused by...\r\n";
+                            }
+                            msg = msg + e.Message + "\r\n" + e.StackTrace + "\r\n";
+
+                            e = e.InnerException;
+                        }
+                        
+                        Console.WriteLine("\nException Caught!");
+                        Console.WriteLine("Message :{0} ", msg);
+
+                        mail.SendMail("发生异常", msg, "plain");
                     }
                     finally
                     {
