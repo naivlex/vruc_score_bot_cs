@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace vruc_score_bot_cs
 {
@@ -13,7 +11,7 @@ namespace vruc_score_bot_cs
         private static readonly int NORMALIZE_SIZE = 64;
         private static readonly string GRAYSCALE = " .:-=+*#%@";
         private static Dictionary<string, string> labeled;
-        private static Dictionary<string, List<double>> labeled_normalized; 
+        private static Dictionary<string, List<double>> labeled_normalized;
 
         static CaptchaSolver()
         {
@@ -94,9 +92,6 @@ namespace vruc_score_bot_cs
             {
                 DrawImageOnConsole(image, 3);
 
-                var cstart_pos = new List<int>();
-                var cend_pos = new List<int>();
-
                 var result = Enumerable.Range(0, image.Width)
                     .Select(
                         c =>
@@ -105,7 +100,8 @@ namespace vruc_score_bot_cs
                                 .Select(r => image.GetPixel(c, r).A > 0)
                                 .Aggregate(false, (x, y) => x || y));
                         }
-                    ).Aggregate((false, new List<(int cstart, int cend)>()), (x, y) => { 
+                    ).Aggregate((false, new List<(int cstart, int cend)>()), (x, y) =>
+                    {
                         if (x.Item1 != y.Item2)
                         {
                             if (x.Item1 == false)
@@ -117,7 +113,8 @@ namespace vruc_score_bot_cs
                         return (y.Item2, x.Item2);
                     })
                     .Item2
-                    .Select(cslice => {
+                    .Select(cslice =>
+                    {
                         var (rstart, rend) = Enumerable.Range(0, image.Height)
                             .Select(
                                 r =>
@@ -126,7 +123,8 @@ namespace vruc_score_bot_cs
                                         .Select(c => image.GetPixel(c, r).A > 0)
                                         .Aggregate(false, (x, y) => x || y));
                                 }
-                            ).Aggregate((false, new List<(int rstart, int rend)>()), (x, y) => {
+                            ).Aggregate((false, new List<(int rstart, int rend)>()), (x, y) =>
+                            {
                                 if (x.Item1 != y.Item2)
                                 {
                                     if (x.Item1 == false)
@@ -141,7 +139,7 @@ namespace vruc_score_bot_cs
                             .Single();
                         return (cslice.cstart, cslice.cend, rstart, rend);
                     })
-                    .Select( t =>
+                    .Select(t =>
                     {
                         var (cstart, cend, rstart, rend) = t;
 
