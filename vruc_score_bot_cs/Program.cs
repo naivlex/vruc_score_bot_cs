@@ -69,7 +69,6 @@ table, th, td {
                         else
                             Console.WriteLine("Pending...");
 
-                        await Task.Delay(295 * 1000);
                     }
                     catch (Exception e)
                     {
@@ -91,10 +90,8 @@ table, th, td {
 
                         mail.SendMail("发生异常", msg, "plain");
                     }
-                    finally
-                    {
-                        await Task.Delay(5 * 1000);
-                    }
+
+                    await Task.Delay(300 * 1000);
                 }
             });
         }
