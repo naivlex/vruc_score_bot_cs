@@ -1,5 +1,6 @@
 ## 使用方法
 
+- 在右边下载 Release
 - 解压后运行 `vruc_score_bot_cs.exe`
 - 填充 `Settings.ini`
 - 再次运行
