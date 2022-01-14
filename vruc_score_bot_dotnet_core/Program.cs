@@ -7,7 +7,7 @@ namespace vruc_score_bot_cs
 {
     class Program
     {
-        static readonly HttpClient client = new HttpClient(new LoggingHandler(new HttpClientHandler()));
+        static readonly HttpClient client = new HttpClient(new CustomHttpHandler(new HttpClientHandler()));
         static readonly string prolog = @"
 <html lang=""en"">
 <head>

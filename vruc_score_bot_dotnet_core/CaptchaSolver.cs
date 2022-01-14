@@ -1,8 +1,10 @@
-﻿using System;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Drawing.Processing;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace vruc_score_bot_cs
 {
@@ -50,7 +52,24 @@ namespace vruc_score_bot_cs
                 }).ToDictionary(x => x.Key, x => x.Value);
         }
 
-        public static List<double> NormalizeSingleChar(Bitmap image, int axis)
+        public static byte GetPixelDim(Rgba32 p, int axis)
+        {
+            switch (axis)
+            {
+                case 0:
+                    return p.R;
+                case 1:
+                    return p.G;
+                case 2:
+                    return p.B;
+                case 3:
+                    return p.A;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(axis));
+            }
+        }
+
+        public static List<double> NormalizeSingleChar(Image<Rgba32> image, int axis)
         {
             var ret = new List<double>();
 
@@ -59,18 +78,17 @@ namespace vruc_score_bot_cs
                 for (int r = 0; r < image_resized.Height; r++)
                     for (int c = 0; c < image_resized.Width; c++)
                     {
-                        ret.Add(((image_resized.GetPixel(c, r).ToArgb() >> (axis * 8)) & 0xFF) / 256.0);
+                        ret.Add(GetPixelDim(image_resized[r, c], axis) / 256.0);
                     }
             }
 
             return ret;
         }
 
-        public static Bitmap OpenBitmapFromBase64(string b64image)
+        public static Image<Rgba32> OpenBitmapFromBase64(string b64image)
         {
             var bytes = Convert.FromBase64String(b64image);
-            using (var memory_stream = new System.IO.MemoryStream(bytes))
-                return new Bitmap(memory_stream);
+            return Image<Rgba32>.Load(bytes);
         }
 
         public static string SolveManually(string b64image)
@@ -97,7 +115,7 @@ namespace vruc_score_bot_cs
                         c =>
                         {
                             return (c, Enumerable.Range(0, image.Height)
-                                .Select(r => image.GetPixel(c, r).A > 0)
+                                .Select(r => image[c, r].A > 0)
                                 .Aggregate(false, (x, y) => x || y));
                         }
                     ).Aggregate((false, new List<(int cstart, int cend)>()), (x, y) =>
@@ -120,7 +138,7 @@ namespace vruc_score_bot_cs
                                 r =>
                                 {
                                     return (r, Enumerable.Range(cslice.cstart, cslice.cend - cslice.cstart)
-                                        .Select(c => image.GetPixel(c, r).A > 0)
+                                        .Select(c => image[c, r].A > 0)
                                         .Aggregate(false, (x, y) => x || y));
                                 }
                             ).Aggregate((false, new List<(int rstart, int rend)>()), (x, y) =>
@@ -143,8 +161,9 @@ namespace vruc_score_bot_cs
                     {
                         var (cstart, cend, rstart, rend) = t;
 
-                        using (var chr = image.Clone(new Rectangle(cstart, rstart, cend - cstart, rend - rstart), image.PixelFormat))
+                        using (var chr = image.Clone())
                         {
+                            chr.Mutate(c => c.Crop(new Rectangle(cstart, rstart, cend - cstart, rend - rstart)));
                             var normalized = NormalizeSingleChar(chr, 3);
 
                             return labeled_normalized.OrderBy(pair =>
@@ -161,17 +180,17 @@ namespace vruc_score_bot_cs
             }
         }
 
-        public static void DrawImageOnConsole(Bitmap bitmap, int axis)
+        public static void DrawImageOnConsole(Image<Rgba32> bitmap, int axis)
         {
             for (int r = 0; r < bitmap.Height; r += 2)
             {
                 for (int c = 0; c < bitmap.Width; c++)
                 {
-                    var p1 = (bitmap.GetPixel(c, r).ToArgb() >> (axis * 8)) & 0xFF;
+                    var p1 = GetPixelDim(bitmap[c, r], axis);
                     var p2 = 0;
 
                     if (r + 1 < bitmap.Height)
-                        p2 = (bitmap.GetPixel(c, r + 1).ToArgb() >> (axis * 8)) & 0xFF;
+                        p2 = GetPixelDim(bitmap[c, r + 1], axis);
 
                     var p = (int)((p1 + p2) / 512.0 * 10);
 
@@ -181,18 +200,17 @@ namespace vruc_score_bot_cs
             }
         }
 
-        public static Bitmap ResizeBitmap(Bitmap bmp, int width, int height)
+        public static Image<Rgba32> ResizeBitmap(Image<Rgba32> bmp, int width, int height)
         {
-            Bitmap result = new Bitmap(width, height);
-            using (Graphics g = Graphics.FromImage(result))
+            using (var new_bmp = bmp.Clone())
             {
-                g.InterpolationMode = InterpolationMode.High;
-                g.CompositingQuality = CompositingQuality.HighQuality;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.DrawImage(bmp, 1, 1, width - 2, height - 2);
-            }
+                var ret = new Image<Rgba32>(width, height);
+                new_bmp.Mutate(x => x.Resize(width - 2, height - 2));
+                ret.Mutate(x => x.DrawImage(new_bmp, new Point(1, 1), 1.0f));
 
-            return result;
+                return ret;
+            }
         }
     }
 }
+

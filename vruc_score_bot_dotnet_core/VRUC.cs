@@ -43,13 +43,13 @@ namespace vruc_score_bot_cs
 
             for (var ind = 1; ind <= captcha_retry_limit; ind++)
             {
-                //using (var captcha_resp = await client.GetAsync("https://v.ruc.edu.cn/auth/captcha"))
-                //    text = await captcha_resp.Content.ReadAsStringAsync();
+                using (var captcha_resp = await client.GetAsync("https://v.ruc.edu.cn/auth/captcha"))
+                    text = await captcha_resp.Content.ReadAsStringAsync();
 
-                //CaptchaResponse captcha_response = JsonConvert.DeserializeObject<CaptchaResponse>(text);
-                //var b64image = captcha_response.b64s.Replace("data:image/png;base64,", "");
+                CaptchaResponse captcha_response = JsonConvert.DeserializeObject<CaptchaResponse>(text);
+                var b64image = captcha_response.b64s.Replace("data:image/png;base64,", "");
 
-                //var result = CaptchaSolver.Solve(b64image);
+                var result = CaptchaSolver.Solve(b64image);
 
                 using (var content = new StringContent(
                     JsonConvert.SerializeObject(new

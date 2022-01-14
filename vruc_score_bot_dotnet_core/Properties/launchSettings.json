@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "vruc_score_bot_dotnet_core": {
+      "commandName": "Project",
+      "environmentVariables": {
+      }
+    }
+  }
+}

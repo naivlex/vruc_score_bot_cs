@@ -43,15 +43,16 @@ namespace vruc_score_bot_cs
                 "redirect_uri=http://jw.ruc.edu.cn/secService/oauthlogin"
                 ))
             {
-                if (!resp.RequestMessage.RequestUri.ToString().Contains("jw.ruc.edu.cn/Njw2017/index.html"))
-                    throw new ApplicationException("API changed");
+                var uri = resp.RequestMessage.RequestUri.ToString();
+                if (!uri.Contains("jw.ruc.edu.cn/Njw2017/index.html"))
+                    throw new ApplicationException($"API changed {uri}");
             }
 
             string token;
 
             {
                 Uri uri = new Uri("http://jw.ruc.edu.cn");
-                IEnumerable<Cookie> responseCookies = LoggingHandler.cookies.GetCookies(uri).Cast<Cookie>();
+                IEnumerable<Cookie> responseCookies = CustomHttpHandler.cookies.GetCookies(uri).Cast<Cookie>();
                 var cookie = responseCookies.Where(cookie_ => cookie_.Name == "token").ToArray()[0];
                 token = cookie.Value;
                 cookie.Expired = true;
