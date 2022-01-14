@@ -20,7 +20,7 @@ namespace vruc_score_bot_cs
         public async Task<bool> CheckLogin()
         {
             using (HttpResponseMessage response = await client.GetAsync("http://v.ruc.edu.cn"))
-                return response.RequestMessage.RequestUri.ToString().Contains("v.ruc.edu.cn/v1me");
+                return !response.RequestMessage.RequestUri.ToString().Contains("login");
         }
 
         public async Task<bool> VRUCLogin(string username, string password, int captcha_retry_limit = 3)
@@ -58,7 +58,7 @@ namespace vruc_score_bot_cs
                         password = password,
                         code = result,
                         remember_me = true,
-                        redirect_uri = "/",
+                        redirect_uri = "/1145141919810",
                         twofactor_password = "",
                         twofactor_recovery = "",
                         token = csrf_token,
@@ -66,8 +66,13 @@ namespace vruc_score_bot_cs
                     }),
                     System.Text.Encoding.UTF8,
                     "application/json"))
+                using (var post_request = new HttpRequestMessage(
+                        HttpMethod.Post,
+                        "https://v.ruc.edu.cn/auth/login"))
                 {
-                    using (var post_result = await client.PostAsync("https://v.ruc.edu.cn/auth/login", content))
+                    post_request.Headers.Add("accept", "application/json");
+                    post_request.Content = content;
+                    using (var post_result = await client.SendAsync(post_request))
                     {
                         if (post_result.StatusCode == System.Net.HttpStatusCode.BadRequest)
                         {
@@ -84,12 +89,10 @@ namespace vruc_score_bot_cs
                                 throw new ArgumentException($@"Wrong password: {post_result_text}");
                             }
                         }
-                    }
-                }
 
-                if (await CheckLogin())
-                {
-                    return true;
+                        if ((await post_result.Content.ReadAsStringAsync()).Contains("1145141919810"))
+                            return true;
+                    }
                 }
             }
 
